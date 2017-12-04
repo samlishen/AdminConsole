@@ -14,6 +14,7 @@ app.use(bodyParser.json());
 
 // Logging middleware
 app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
     console.log(`${new Date().toString()}: ${req.method} ${req.url}`);
     console.log(req.body);
     next();
@@ -28,5 +29,5 @@ app.use('/api/vm', API_VM);
 app.use('/api/node', API_Node);
 
 // Start listening
-app.listen(3001);
+app.listen(12345);
 

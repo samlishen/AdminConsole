@@ -2,11 +2,19 @@ const express = require('express');
 const request = require('request');
 
 const router = express.Router();
-const VMsDB = require('../DataAccess/VM');
+
+const VM = require('../DataAccess/VM');
+const Node = require('../DataAccess/Node');
+const Restaurant = require('../DataAccess/Restaurant');
+const Version = require('../DataAccess/Version');
 
 router.get('/', async (req, res) => {
-    var vms = await VMsDB.findAll({
-        attributes: ['id', 'vmName', 'ipAddress']
+    var vms = await VM.findAll({
+        attributes: ['id', 'vmName', 'ipAddress'],
+        include: [{
+            model: Node,
+            include: [Restaurant, Version]
+        }]
     });
     if (vms) {
         res.status(200).send(vms);
@@ -26,7 +34,7 @@ router.post('/usage', async (req, res) => {
     } else if (requestBody.ipAddress) {
         url = `${requestBody.ipAddress}:3000/api/vm/usage`;
     } else {
-        var ipAddress = await VMsDB.findOne({
+        var ipAddress = await VM.findOne({
             where: {
                 vmName: requestBody.vmName
             }
