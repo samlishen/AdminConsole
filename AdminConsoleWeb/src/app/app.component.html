@@ -1,23 +1,45 @@
 <h1>Admin Console</h1>
-
+<h2>VMs</h2>
 <div *ngFor="let vm of vms">
   <div class="well">
     <ul class="list-group">
       <li class="list-group-item">ID: {{vm.id}}</li>
       <li class="list-group-item">Name: {{vm.vmName}}</li>
       <li class="list-group-item">IP Address: {{vm.ipAddress}}</li>
-      <div *ngFor="let node of vm.Nodes">
-        <div class="well">
-          <ul class="list-group">
-            <li class="list-group-item">ID: {{node.id}}</li>
-            <li class="list-group-item">Restaurant Name: {{node.Restaurant.restaruantName}}</li>
-            <li class="list-group-item">Port: {{node.port}}</li>
-            <li class="list-group-item">Pid: {{node.pid}}</li>
-            <li class="list-group-item">Current Commit: {{node.Version.commitHash}}</li>
-            <li class="list-group-item">Commit Message: {{node.Version.commitMessage}}</li>
-          </ul>
+      <li class="list-group-item">Nodes:
+        <div *ngFor="let node of vm.Nodes">
+          <div class="well">
+            <ul class="list-group">
+              <li class="list-group-item">ID: {{node.id}}</li>
+              <li class="list-group-item">Restaurant: {{node.Restaurant.id}} {{node.Restaurant.restaruantName}}</li>
+              <li class="list-group-item">Port: {{node.port}}</li>
+              <li class="list-group-item">Pid: {{node.pid}}</li>
+              <li class="list-group-item">
+                <div class="form-group">
+                  <p>Version: </p>
+                  <select class="form-control" id="sel1" #select (change)="node.VersionId = select.value">
+                    <option *ngFor="let version of versions" [value]="version.id" [selected]="node.VersionId == version.id">{{version.id}}: {{version.message}}</option>
+                  </select>
+                </div>
+              </li>
+              <li class="list-group-item">
+                <button type="button" class="btn" (click)="Shutdown($event, vm, node)">Shutdown</button>
+                <button type="button" class="btn" (click)="Update($event, vm, node)">Update</button>
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
+      </li>
+    </ul>
+  </div>
+</div>
+<h2>Version</h2>
+<div *ngFor="let version of versions">
+  <div class="well">
+    <ul class="list-group">
+      <li class="list-group-item">ID: {{version.id}}</li>
+      <li class="list-group-item">Hash: {{version.hash}}</li>
+      <li class="list-group-item">Message: {{version.message}}</li>
     </ul>
   </div>
 </div>

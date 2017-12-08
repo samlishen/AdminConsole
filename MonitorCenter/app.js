@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 // Local dependency
 const API_VM = require('./API/API_VM');
 const API_Node = require('./API/API_Node');
+const API_Version = require('./API/API_Version');
 
 // Local variables
 var app = express();
@@ -27,6 +28,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/vm', API_VM);
 app.use('/api/node', API_Node);
+app.use('/api/version', API_Version);
 
 // Start listening
 app.listen(12345);

@@ -157,7 +157,7 @@ router.put('/:vmId/:nodeId', async (req, res) => {
             });
             await promise;
 
-            if (response.status == 200) {
+            if (response.status && response.status == 200) {
                 node.port = response.body.port;
                 node.pid = response.body.pid;
                 await restaurant.addNode(node);
@@ -167,8 +167,8 @@ router.put('/:vmId/:nodeId', async (req, res) => {
             res.status(response.status).send(response.body);
             return;
         }
-        res.status(404).send();
     }
+    res.status(404).send();
 });
 
 router.delete('/:vmId/:nodeId', async(req, res) => {

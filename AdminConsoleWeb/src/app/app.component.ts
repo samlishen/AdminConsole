@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import {DataService} from "./services/data.service";
+import { DataService } from "./services/data.service";
 
 @Component({
   selector: 'app-root',
@@ -9,11 +9,27 @@ import {DataService} from "./services/data.service";
 
 export class AppComponent {
   vms: any[];
+  versions: any[];
 
   constructor(public dataService:DataService) {
     this.dataService.getVms().subscribe(retVal => {
-      console.log(retVal);
       this.vms = retVal;
+    });
+
+    this.dataService.getVersion().subscribe(retVal => {
+      this.versions = retVal;
+    })
+  }
+
+  public Shutdown(event, vm, node) {
+    this.dataService.shutdownNode(vm, node).subscribe(retVal => {
+      console.log(retVal);
+    });
+  }
+
+  public Update(event, vm, node) {
+    this.dataService.updateNode(vm, node).subscribe(retVal => {
+      console.log(retVal);
     });
   }
 }
