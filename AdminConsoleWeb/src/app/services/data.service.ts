@@ -11,35 +11,36 @@ export class DataService {
   }
 
   getVms() {
-    return this.http.get('http://localhost:12345/api/vm').map(res => res.json());
+    return this.http.get('http://localhost:3001/api/vm').map(res => res.json());
   }
 
   getVersion() {
-    return this.http.get('http://localhost:12345/api/version').map(res => res.json());
+    return this.http.get('http://localhost:3001/api/version').map(res => res.json());
   }
 
   updateNode(vm, node) {
-    var url = `http://localhost:12345/api/node/${vm.id}/${node.id}`;
+    var url = `http://localhost:3001/api/node`;
     console.log(url);
     var headers = new HttpHeaders();
     headers.append('Content-Type', 'application/json');
-    headers.append('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, DELETE, PUT');
     var body = {
+      vmId: vm.id,
+      nodeId: node.id,
+      mode: "update",
       restaurantId: node.RestaurantId,
       port: node.port,
       versionId: node.VersionId
     };
 
-    return this.httpClient.put(url, JSON.stringify(body), {headers: headers});
+    return this.httpClient.post(url, JSON.stringify(body), {headers: headers});
 
   }
 
   shutdownNode(vm, node) {
-    var url = `http://localhost:12345/api/node/${vm.id}/${node.id}`;
+    var url = `http://localhost:3001/api/node/${vm.id}/${node.id}`;
     console.log(url);
     var headers = new HttpHeaders();
     headers.append('Content-Type', 'application/json');
-    headers.append('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, DELETE, PUT')
     return this.httpClient.delete(url, {headers: headers});
   }
 }

@@ -14,4 +14,18 @@ router.get('/', async (req, res) => {
     }
 });
 
+// router.post('/', async (req, res) => {
+//     var mode = req.body.mode;
+//
+//     if (!mode) {
+//         res.status(400).send();
+//         return;
+//     }
+//
+//     switch (mode) {
+//         case "update":
+//
+//     }
+// })
+
 module.exports = router;
