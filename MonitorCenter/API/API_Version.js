@@ -2,19 +2,7 @@ const express = require('express');
 const request = require('request');
 
 const router = express.Router();
-var versionDb = require('../DataAccess/Version');
 var gitConfig = require('../Config/Git');
-
-router.get('/', async (req, res) => {
-    var versions = await versionDb.findAll({
-        attributes: ['id', ['commitHash', 'hash'], ['commitMessage', 'message']]
-    });
-    if (versions) {
-        res.status(200).send(versions);
-    } else {
-        res.status(404).send();
-    }
-});
 
 router.post('/', async (req, res) => {
     let since = req.body.since;
@@ -51,7 +39,7 @@ router.post('/', async (req, res) => {
     let promise = new Promise((resolve, reject) => {
         request(option, (err, res, body) => {
             if (err) {
-                response.status = 400
+                response.status = 400;
                 reject();
             } else {
                 response.status = res.statusCode;
