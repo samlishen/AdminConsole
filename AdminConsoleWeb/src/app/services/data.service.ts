@@ -1,46 +1,60 @@
 import { Injectable } from '@angular/core';
-import { Http } from '@angular/http';
-import {HttpClient, HttpHeaders} from "@angular/common/http";
+import { HttpClient, HttpHeaders } from "@angular/common/http";
 import 'rxjs/add/operator/map';
 
 @Injectable()
 export class DataService {
 
-  constructor(public http:Http, public httpClient:HttpClient) {
+  constructor(private http:HttpClient) {
 
   }
 
   getVms() {
-    return this.http.get('http://localhost:3001/api/vm').map(res => res.json());
+    return this.http.get('http://localhost:3001/api/vm');
   }
 
-  getVersion() {
-    return this.http.get('http://localhost:3001/api/version').map(res => res.json());
+  getVersion(since, until) {
+    let url = 'http://localhost:3001/api/version';
+
+    let headers = new HttpHeaders({'Content-Type': 'application/json'});
+
+    let body = {
+      since: since,
+      until: until
+    };
+
+    return this.http.post(url, JSON.stringify(body), {headers: headers});
   }
 
-  updateNode(vm, node) {
+  updateNode(vm, node, commitHash) {
+    node.version.commitHash = commitHash;
+
     var url = `http://localhost:3001/api/node`;
-    console.log(url);
-    var headers = new HttpHeaders();
-    headers.append('Content-Type', 'application/json');
+
+    var headers = new HttpHeaders({'Content-Type': 'application/json'});
+
     var body = {
       vmId: vm.id,
       nodeId: node.id,
       mode: "update",
-      restaurantId: node.RestaurantId,
-      port: node.port,
       versionId: node.VersionId
     };
 
-    return this.httpClient.post(url, JSON.stringify(body), {headers: headers});
+    return this.http.post(url, JSON.stringify(body), {headers: headers});
 
   }
 
   shutdownNode(vm, node) {
-    var url = `http://localhost:3001/api/node/${vm.id}/${node.id}`;
-    console.log(url);
-    var headers = new HttpHeaders();
-    headers.append('Content-Type', 'application/json');
-    return this.httpClient.delete(url, {headers: headers});
+    var url = `http://localhost:3001/api/node`;
+
+    var headers = new HttpHeaders({'Content-Type': 'application/json'});
+
+    var body = {
+      vmId: vm.id,
+      nodeId: node.id,
+      mode: "restart"
+    }
+
+    return this.http.post(url, JSON.stringify(body), {headers: headers});
   }
 }

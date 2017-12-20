@@ -15,9 +15,10 @@ app.use(bodyParser.json());
 
 // Logging middleware
 app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Content-Type");
     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
     console.log(`${new Date().toString()}: ${req.method} ${req.url}`);
-    console.log(req.body);
+    console.log(`Body: ${JSON.stringify(req.body)}`);
     next();
 });
 

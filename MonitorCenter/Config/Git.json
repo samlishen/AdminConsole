@@ -1,4 +1,6 @@
 {
-  "owner": "unicough",
-  "repo": "restmesh"
+  "GitRepositoryEndpoint": "https://api.github.com/repos",
+  "OwnerName": "/unicough",
+  "RepositoryName": "/restmesh",
+  "AuthenticationToken": "4a3c16808b0c12d3390b3d7b1366297db04c686e"
 }

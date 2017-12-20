@@ -7,7 +7,7 @@ var restaurantDb = require('../DataAccess/Restaurant');
 var nodeDb = require('../DataAccess/Node');
 var versionDb = require('../DataAccess/Version');
 
-router.get('/:', async (req, res) => {
+router.get('/', async (req, res) => {
     var vmId = req.body.vmId;
 
     if (vmId) {
@@ -29,85 +29,83 @@ router.post('/', async (req, res) => {
 
     if (mode) {
         switch (mode) {
-            case "add":
-                var vmId = req.body.vmId;
-                var restaurantId = req.body.restaurantId;
-                var port = req.body.port;
-                var versionId = req.body.versionId;
-
-                if (vmId && restaurantId && port && versionId) {
-                    var vm = await vmDb.findOne({
-                        where: {
-                            id: vmId
-                        }
-                    });
-                    var restaurant = await restaurantDb.findOne({
-                        where: {
-                            id: restaurantId
-                        }
-                    });
-                    var version = await versionDb.findOne({
-                        where: {
-                            id: versionId
-                        }
-                    });
-
-                    if (vm && restaurant && version) {
-                        var response = {};
-                        var promise = new Promise((resolve, reject) => {
-                            const option = {
-                                url: `${vm.ipAddress}:3000/api/node`,
-                                method: 'POST',
-                                header: {
-                                    'Content-Type': 'application/json'
-                                },
-                                json: {
-                                    restaurantName: restaurant.restaruantName,
-                                    versionHash: version.commitHash,
-                                    port: port
-                                }
-                            };
-                            request(option, (err, res, body) => {
-                                console.log(err);
-                                console.log(res.statusCode);
-                                console.log(body);
-                                if (err) {
-                                    response.status = 400;
-                                    reject();
-                                } else {
-                                    response.status = 200;
-                                    response.body = body;
-                                    resolve();
-                                }
-                            })
-                        });
-                        await promise;
-
-                        if (response.status == 200) {
-                            var newNode = await nodeDb.create({
-                                port: response.body.port,
-                                pid: response.body.pid,
-                            });
-                            restaurant.addNode(newNode);
-                            vm.addNode(newNode);
-                            version.addNode(newNode);
-                            response.body.id = newNode.id;
-                        }
-
-                        res.status(response.status).send(response.body);
-                        return;
-                    }
-                }
-                res.status(404).send();
-                return;
+            // case "add":
+            //     var vmId = req.body.vmId;
+            //     var restaurantId = req.body.restaurantId;
+            //     var port = req.body.port;
+            //     var versionId = req.body.versionId;
+            //
+            //     if (vmId && restaurantId && port && versionId) {
+            //         var vm = await vmDb.findOne({
+            //             where: {
+            //                 id: vmId
+            //             }
+            //         });
+            //         var restaurant = await restaurantDb.findOne({
+            //             where: {
+            //                 id: restaurantId
+            //             }
+            //         });
+            //         var version = await versionDb.findOne({
+            //             where: {
+            //                 id: versionId
+            //             }
+            //         });
+            //
+            //         if (vm && restaurant && version) {
+            //             var response = {};
+            //             var promise = new Promise((resolve, reject) => {
+            //                 const option = {
+            //                     url: `${vm.ipAddress}:3000/api/node`,
+            //                     method: 'POST',
+            //                     header: {
+            //                         'Content-Type': 'application/json'
+            //                     },
+            //                     json: {
+            //                         restaurantName: restaurant.restaruantName,
+            //                         versionHash: version.commitHash,
+            //                         port: port
+            //                     }
+            //                 };
+            //                 request(option, (err, res, body) => {
+            //                     console.log(err);
+            //                     console.log(res.statusCode);
+            //                     console.log(body);
+            //                     if (err) {
+            //                         response.status = 400;
+            //                         reject();
+            //                     } else {
+            //                         response.status = 200;
+            //                         response.body = body;
+            //                         resolve();
+            //                     }
+            //                 })
+            //             });
+            //             await promise;
+            //
+            //             if (response.status == 200) {
+            //                 var newNode = await nodeDb.create({
+            //                     port: response.body.port,
+            //                     pid: response.body.pid,
+            //                 });
+            //                 restaurant.addNode(newNode);
+            //                 vm.addNode(newNode);
+            //                 version.addNode(newNode);
+            //                 response.body.id = newNode.id;
+            //             }
+            //
+            //             res.status(response.status).send(response.body);
+            //             return;
+            //         }
+            //     }
+            //     res.status(404).send();
+            //     return;
             case "update":
                 var vmId = req.body.vmId;
                 var nodeId = req.body.nodeId;
-                var restaurantId = req.body.restaurantId;
-                var port = req.body.port;
                 var versionId = req.body.versionId;
 
-                if (vmId && restaurantId && port && versionId) {
+                if (vmId && versionId) {
                     var vm = await vmDb.findOne({
                         where: {
                             id: vmId
@@ -118,24 +116,20 @@ router.post('/', async (req, res) => {
                             id: nodeId
                         }
                     })
-                    var restaurant = await restaurantDb.findOne({
-                        where: {
-                            id: restaurantId
-                        }
-                    })
                     var version = await versionDb.findOne({
                         where: {
                             id: versionId
                         }
                     });
-                    if (vm && restaurant && node && version) {
+                    if (vm && node && version) {
                         var response = {};
                         var promise = new Promise((resolve, reject) => {
                             const option = {
-                                url: `${vm.ipAddress}:${port}/git`,
+                                url: `${vm.ipAddress}:${node.port}/git`,
                                 method: 'POST',
                                 header: {
-                                    'Content-Type': 'application/json'
+                                    'Content-Type': 'application/json',
+                                    'authorization': 'abcd+1234'
                                 },
                                 json: {
                                     command: 'checkout',
@@ -160,9 +154,6 @@ router.post('/', async (req, res) => {
                         await promise;
 
                         if (response.status && response.status == 200) {
-                            node.port = response.body.port;
-                            node.pid = response.body.pid;
-                            await restaurant.addNode(node);
                             await version.addNode(node);
                             await node.save();
                         }
@@ -172,7 +163,7 @@ router.post('/', async (req, res) => {
                 }
                 res.status(404).send();
                 return;
-            case "delete":
+            case "restart":
                 var vmId = req.body.vmId;
                 var nodeId = req.body.nodeId;
 
@@ -192,19 +183,18 @@ router.post('/', async (req, res) => {
                         var response = {};
                         var promise = new Promise((resolve, reject) => {
                             const option = {
-                                url: `${vm.ipAddress}:3000/api/node`,
-                                method: 'DELETE',
+                                url: `${vm.ipAddress}:${node.port}/git`,
+                                method: 'POST',
                                 header: {
-                                    'Content-Type': 'application/json'
+                                    'Content-Type': 'application/json',
+                                    'authorization': 'abcd+1234'
                                 },
                                 json: {
-                                    pid: node.pid
+                                    command: "shutdown",
+                                    args: ""
                                 }
                             };
                             request(option, (err, res, body) => {
-                                console.log(err);
-                                console.log(res.statusCode);
-                                console.log(body);
                                 if (err) {
                                     response.status = 400;
                                     reject();
@@ -216,10 +206,6 @@ router.post('/', async (req, res) => {
                             })
                         });
                         await promise;
-
-                        if (response.status == 200) {
-                            node.destroy({force: true});
-                        }
 
                         res.status(response.status).send(response.body);
                         return;

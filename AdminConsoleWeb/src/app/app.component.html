@@ -13,18 +13,17 @@
               <li class="list-group-item">ID: {{node.id}}</li>
               <li class="list-group-item">Restaurant: {{node.Restaurant.id}} {{node.Restaurant.restaruantName}}</li>
               <li class="list-group-item">Port: {{node.port}}</li>
-              <li class="list-group-item">Pid: {{node.pid}}</li>
               <li class="list-group-item">
                 <div class="form-group">
                   <p>Version: </p>
-                  <select class="form-control" id="sel1" #select (change)="node.VersionId = select.value">
-                    <option *ngFor="let version of versions" [value]="version.id" [selected]="node.VersionId == version.id">{{version.id}}: {{version.message}}</option>
+                  <select class="form-control" id="sel1" #select>
+                    <option *ngFor="let version of versions" [value]="version.sha" [selected]="node.version == version.sha">{{version.sha.substring(0, 6)}}: {{version.commit.message}}</option>
                   </select>
                 </div>
               </li>
               <li class="list-group-item">
                 <button type="button" class="btn" (click)="Shutdown($event, vm, node)">Shutdown</button>
-                <button type="button" class="btn" (click)="Update($event, vm, node)">Update</button>
+                <button type="button" class="btn" (click)="Update($event, vm, node, select.value)" [disabled]="select.value==node.version">Update</button>
               </li>
             </ul>
           </div>
@@ -34,12 +33,22 @@
   </div>
 </div>
 <h2>Version</h2>
-<div *ngFor="let version of versions">
-  <div class="well">
-    <ul class="list-group">
-      <li class="list-group-item">ID: {{version.id}}</li>
-      <li class="list-group-item">Hash: {{version.hash}}</li>
-      <li class="list-group-item">Message: {{version.message}}</li>
-    </ul>
+<div class="well">
+  <div>
+    <label>From: </label>
+    <input class="form-control" type="datetime-local" #since>
+    <label>To: </label>
+    <input class="form-control" type="datetime-local" #until>
+    <button type="button" class="btn" (click)="GetVersion($event, since.value, until.value)">Update</button>
+  </div>
+  <div *ngFor="let version of versions">
+    <div class="well">
+      <ul class="list-group">
+        <li class="list-group-item">Hash: {{version.sha}}</li>
+        <li class="list-group-item">Committer: {{version.commit.committer.name}}</li>
+        <li class="list-group-item">Commit Date: {{version.commit.committer.date}}</li>
+        <li class="list-group-item">Message: {{version.commit.message}}</li>
+      </ul>
+    </div>
   </div>
 </div>
