@@ -1,225 +1,192 @@
+// NPM Dependencies
 const express = require('express');
-const request = require('request');
+const request = require('request-promise-native');
+const HttpStatus = require('http-status-codes');
+const Linq = require('node-linq').LINQ;
 
+// Local Dependencies
+const nodes = require('../Config/Nodes');
+const gitConfig = require('../Config/Git');
+
+// Local Variable
 const router = express.Router();
-var vmDb = require('../DataAccess/VM');
-var restaurantDb = require('../DataAccess/Restaurant');
-var nodeDb = require('../DataAccess/Node');
-var versionDb = require('../DataAccess/Version');
 
-router.get('/', async (req, res) => {
-    var vmId = req.body.vmId;
-
-    if (vmId) {
-        var retVals = await nodeDb.findAll({
-            where: {
-                VMId: vmId
+router.get('/', async (req, res, next) =>
+{
+    for (var i = 0; i < nodes.Nodes.length; i++)
+    {
+        let node = nodes.Nodes[i];
+        let options = {
+            url: `${node.serviceDnsName}:${node.port}/monitor/lastRequest`,
+            headers: {
+                "authorization": "abcd+1234"
             }
-        });
+        };
 
-        res.status(200).send(retVals);
-        return;
+        await request.get(options)
+            .then((body) =>
+            {
+                node.lastRequest = body.lastRequest;
+            })
+            .catch((err) =>
+            {
+
+            });
+
+        options = {
+            url: `${node.serviceDnsName}:${node.port}/git`,
+            body: {
+                command: 'rev-parse',
+                args: 'HEAD'
+            },
+            headers: {
+                "authorization": "abcd+1234",
+                "Content-Type": "application/json"
+            },
+            json: true
+        };
+
+        await request.post(options)
+            .then((body) =>
+            {
+                node.version = body;
+            })
+            .catch((err) =>
+            {
+
+            });
+
+        options = {
+            url: `${gitConfig.GitRepositoryEndpoint}${gitConfig.OwnerName}${gitConfig.RepositoryName}/commits/${node.version}`,
+            headers: {
+                'authorization': `token ${gitConfig.AuthenticationToken}`,
+                'user-agent': 'AdminConsole'
+            }
+        };
+
+        await request.get(options)
+            .then((body) =>
+            {
+                node.version = JSON.parse(body).commit.message;
+            })
+            .catch((err) =>
+            {
+
+            });
     }
 
-    res.status(404).send();
+    res.status(HttpStatus.OK).send(nodes.Nodes);
+    next();
 });
 
-router.post('/', async (req, res) => {
-    var mode = req.body.mode;
+router.post('/', async (req, res) =>
+{
+    const mode = req.body.mode;
+    const id = req.body.id;
+    const commitHash = req.body.commitHash;
 
-    if (mode) {
-        switch (mode) {
-            // case "add":
-            //     var vmId = req.body.vmId;
-            //     var restaurantId = req.body.restaurantId;
-            //     var port = req.body.port;
-            //     var versionId = req.body.versionId;
-            //
-            //     if (vmId && restaurantId && port && versionId) {
-            //         var vm = await vmDb.findOne({
-            //             where: {
-            //                 id: vmId
-            //             }
-            //         });
-            //         var restaurant = await restaurantDb.findOne({
-            //             where: {
-            //                 id: restaurantId
-            //             }
-            //         });
-            //         var version = await versionDb.findOne({
-            //             where: {
-            //                 id: versionId
-            //             }
-            //         });
-            //
-            //         if (vm && restaurant && version) {
-            //             var response = {};
-            //             var promise = new Promise((resolve, reject) => {
-            //                 const option = {
-            //                     url: `${vm.ipAddress}:3000/api/node`,
-            //                     method: 'POST',
-            //                     header: {
-            //                         'Content-Type': 'application/json'
-            //                     },
-            //                     json: {
-            //                         restaurantName: restaurant.restaruantName,
-            //                         versionHash: version.commitHash,
-            //                         port: port
-            //                     }
-            //                 };
-            //                 request(option, (err, res, body) => {
-            //                     console.log(err);
-            //                     console.log(res.statusCode);
-            //                     console.log(body);
-            //                     if (err) {
-            //                         response.status = 400;
-            //                         reject();
-            //                     } else {
-            //                         response.status = 200;
-            //                         response.body = body;
-            //                         resolve();
-            //                     }
-            //                 })
-            //             });
-            //             await promise;
-            //
-            //             if (response.status == 200) {
-            //                 var newNode = await nodeDb.create({
-            //                     port: response.body.port,
-            //                     pid: response.body.pid,
-            //                 });
-            //                 restaurant.addNode(newNode);
-            //                 vm.addNode(newNode);
-            //                 version.addNode(newNode);
-            //                 response.body.id = newNode.id;
-            //             }
-            //
-            //             res.status(response.status).send(response.body);
-            //             return;
-            //         }
-            //     }
-            //     res.status(404).send();
-            //     return;
-            case "update":
-                var vmId = req.body.vmId;
-                var nodeId = req.body.nodeId;
-                var versionId = req.body.versionId;
+    var node;
+    var options;
 
-                if (vmId && versionId) {
-                    var vm = await vmDb.findOne({
-                        where: {
-                            id: vmId
-                        }
-                    })
-                    var node = await nodeDb.findOne({
-                        where: {
-                            id: nodeId
-                        }
-                    })
-                    var version = await versionDb.findOne({
-                        where: {
-                            id: versionId
-                        }
-                    });
-                    if (vm && node && version) {
-                        var response = {};
-                        var promise = new Promise((resolve, reject) => {
-                            const option = {
-                                url: `${vm.ipAddress}:${node.port}/git`,
-                                method: 'POST',
-                                header: {
-                                    'Content-Type': 'application/json',
-                                    'authorization': 'abcd+1234'
-                                },
-                                json: {
-                                    command: 'checkout',
-                                    args: `${version.commitHash}`
-                                }
-                            };
+    switch (mode)
+    {
+        case "update":
+            node = new Linq(nodes.Nodes)
+                .Where((node) =>
+                {
+                    return node.id == id;
+                })
+                .FirstOrDefault();
 
-                            request(option, (err, res, body) => {
-                                console.log(err);
-                                console.log(res.statusCode);
-                                console.log(body);
-                                if (err) {
-                                    response.status = 400;
-                                    reject();
-                                } else {
-                                    response.status = 200;
-                                    response.body = body;
-                                    resolve();
-                                }
-                            })
-                        });
-                        await promise;
-
-                        if (response.status && response.status == 200) {
-                            await version.addNode(node);
-                            await node.save();
-                        }
-                        res.status(response.status).send(response.body);
-                        return;
-                    }
-                }
-                res.status(404).send();
+            if (!node)
+            {
+                res.status(HttpStatus.NOT_FOUND).send();
                 return;
-            case "restart":
-                var vmId = req.body.vmId;
-                var nodeId = req.body.nodeId;
+            }
 
-                if (vmId && nodeId) {
-                    var vm = await vmDb.findOne({
-                        where: {
-                            id: vmId
-                        }
-                    });
-                    var node = await nodeDb.findOne({
-                        where: {
-                            id: nodeId
-                        }
-                    });
+            options = {
+                url: `${node.serviceDnsName}:${node.port}/git`,
+                headers: {
+                    "authorization": "abcd+1234"
+                },
+                body: {
+                    command: 'checkout',
+                    args: `-f ${commitHash}`
+                },
+                json: true
+            };
 
-                    if (vm && node) {
-                        var response = {};
-                        var promise = new Promise((resolve, reject) => {
-                            const option = {
-                                url: `${vm.ipAddress}:${node.port}/git`,
-                                method: 'POST',
-                                header: {
-                                    'Content-Type': 'application/json',
-                                    'authorization': 'abcd+1234'
-                                },
-                                json: {
-                                    command: "shutdown",
-                                    args: ""
-                                }
-                            };
-                            request(option, (err, res, body) => {
-                                if (err) {
-                                    response.status = 400;
-                                    reject();
-                                } else {
-                                    response.status = 200;
-                                    response.body = body;
-                                    resolve();
-                                }
-                            })
-                        });
-                        await promise;
+            await request.post(options)
+                .then((body) =>
+                {
+                    res.status(HttpStatus.OK).send(body);
+                })
+                .catch((err) =>
+                {
+                    res.status(err.statusCode).send(err.body);
+                });
 
-                        res.status(response.status).send(response.body);
-                        return;
-                    }
-                }
-                res.status(404).send();
+            return;
+        case "restart":
+            node = new Linq(nodes.Nodes)
+                .Where((node) =>
+                {
+                    return node.id == id;
+                })
+                .FirstOrDefault();
+
+            if (!node)
+            {
+                res.status(HttpStatus.NOT_FOUND).send();
                 return;
-        }
-        res.status(404).send();
-        return;
+            }
+
+            options = {
+                url: `${node.serviceDnsName}:${node.port}/git`,
+                headers: {
+                    "authorization": "abcd+1234"
+                },
+                body: {
+                    command: 'shutdown'
+                },
+                json: true
+            };
+
+            console.log(options);
+
+            await request.post(options)
+                .then((body) =>
+                {
+                    var retVal = {
+                        Message: body
+                    }
+
+                    res.status(HttpStatus.OK).send(retVal);
+                })
+                .catch((err) =>
+                {
+                    res.status(err.statusCode).send(err.body);
+                });
+
+            return;
+        default:
+            res.status(404).send('{"Error" : "Command Not Found"}');
+            return;
     }
-
-    res.status(400).send;
-    return;
 });
+
+var RetrieveNodeWithId = (id) =>
+{
+    return new Promise((resolve, reject) =>
+    {
+        var retVal = new Linq(nodes.Nodes)
+            .Where((node) =>
+            {
+                return node.id == id;
+            })
+            .FirstOrDefault();
+        resolve(retVal);
+    });
+};
 
 module.exports = router;

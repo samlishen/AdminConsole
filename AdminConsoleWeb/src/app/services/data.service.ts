@@ -2,59 +2,89 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import 'rxjs/add/operator/map';
 
+
 @Injectable()
 export class DataService {
-
   constructor(private http:HttpClient) {
 
   }
 
-  getVms() {
-    return this.http.get('http://localhost:3001/api/vm');
+  GetNodes()
+  {
+    // return this.http.get(`
+    // ${ServiceConfig.ServiceDnsName}:${ServiceConfig.SPort}
+    // ${ServiceConfig.SApi}${ServiceConfig.SNodeApi}
+    // `);
+    var headers = new HttpHeaders({
+      'Authorization': 'AbCd+1234',
+      'Content-Type': 'application/json'
+    });
+
+    return this.http.get('http://localhost:3001/api/nodes', {headers: headers});
   }
 
-  getVersion(since, until) {
-    let url = 'http://localhost:3001/api/version';
+  GetVersions(branch = undefined, since = undefined, until = undefined)
+  {
+    var url = `http://localhost:3001/api/versions/commits`;
 
-    let headers = new HttpHeaders({'Content-Type': 'application/json'});
+    var headers = new HttpHeaders({
+      'Authorization': 'AbCd+1234',
+      'Content-Type': 'application/json'
+    });
 
-    let body = {
+    var body = {
+      branch: branch,
       since: since,
       until: until
     };
 
-    return this.http.post(url, JSON.stringify(body), {headers: headers});
+    return this.http.post(url, body, {headers: headers});
   }
 
-  updateNode(vm, node, commitHash) {
-    node.version.commitHash = commitHash;
+  GetBranches()
+  {
+    var url = `http://localhost:3001/api/versions/branches`;
 
-    var url = `http://localhost:3001/api/node`;
+    var headers = new HttpHeaders({
+      'Authorization': 'AbCd+1234'
+    });
 
-    var headers = new HttpHeaders({'Content-Type': 'application/json'});
+    return this.http.get(url, {headers: headers});
+  }
+
+  Restart(node: any)
+  {
+    console.log(node);
+
+    var url = `http://localhost:3001/api/nodes`;
+
+    var headers = new HttpHeaders({
+      'Authorization': 'AbCd+1234'
+    });
 
     var body = {
-      vmId: vm.id,
-      nodeId: node.id,
-      mode: "update",
-      versionId: node.VersionId
+      id: node.id,
+      mode: 'restart'
     };
 
-    return this.http.post(url, JSON.stringify(body), {headers: headers});
-
+    return this.http.post(url, body, {headers: headers});
   }
 
-  shutdownNode(vm, node) {
-    var url = `http://localhost:3001/api/node`;
+  ChangeVersion(id, commitHash)
+  {
+    var url = `http://localhost:3001/api/nodes`;
 
-    var headers = new HttpHeaders({'Content-Type': 'application/json'});
+    var headers = new HttpHeaders({
+      'Authorization': 'AbCd+1234',
+      'Content-Type': 'application/json'
+    });
 
     var body = {
-      vmId: vm.id,
-      nodeId: node.id,
-      mode: "restart"
-    }
+      id: id,
+      mode: 'update',
+      commitHash: commitHash
+    };
 
-    return this.http.post(url, JSON.stringify(body), {headers: headers});
+    return this.http.post(url, body, {headers: headers});
   }
 }
