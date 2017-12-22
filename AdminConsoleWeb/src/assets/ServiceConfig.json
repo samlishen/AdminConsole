@@ -1,0 +1,9 @@
+{
+  "ServiceDnsName": "http://localhost",
+  "Port": 3001,
+  "Api": "/api",
+  "VersionsApi": "/versions",
+  "BranchesApi": "/branches",
+  "CommitsApi": "/commits",
+  "NodesApi": "/nodes"
+}

@@ -1,54 +1,115 @@
-<h1>Admin Console</h1>
-<h2>VMs</h2>
-<div *ngFor="let vm of vms">
-  <div class="well">
-    <ul class="list-group">
-      <li class="list-group-item">ID: {{vm.id}}</li>
-      <li class="list-group-item">Name: {{vm.vmName}}</li>
-      <li class="list-group-item">IP Address: {{vm.ipAddress}}</li>
-      <li class="list-group-item">Nodes:
-        <div *ngFor="let node of vm.Nodes">
-          <div class="well">
-            <ul class="list-group">
-              <li class="list-group-item">ID: {{node.id}}</li>
-              <li class="list-group-item">Restaurant: {{node.Restaurant.id}} {{node.Restaurant.restaruantName}}</li>
-              <li class="list-group-item">Port: {{node.port}}</li>
-              <li class="list-group-item">
-                <div class="form-group">
-                  <p>Version: </p>
-                  <select class="form-control" id="sel1" #select>
-                    <option *ngFor="let version of versions" [value]="version.sha" [selected]="node.version == version.sha">{{version.sha.substring(0, 6)}}: {{version.commit.message}}</option>
-                  </select>
-                </div>
-              </li>
-              <li class="list-group-item">
-                <button type="button" class="btn" (click)="Shutdown($event, vm, node)">Shutdown</button>
-                <button type="button" class="btn" (click)="Update($event, vm, node, select.value)" [disabled]="select.value==node.version">Update</button>
-              </li>
-            </ul>
-          </div>
-        </div>
+<style>
+  .container.box {
+    background-color: #6a8ded;
+    padding: 20px;
+    margin: 10px;
+    border-radius: 5px;
+    box-sizing: border-box;
+  }
+  .indent {
+    text-indent: 20px;
+  }
+  .modal-body {
+    max-height: calc(100vh - 210px);
+    overflow-y: auto;
+  }
+</style>
+
+<script>
+  $('#myModal').on('shown.bs.modal', function () {
+    $('#myInput').focus()
+  })
+</script>
+
+<nav class="navbar navbar-toggleable-md navbar-inverse bg-inverse">
+  <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <a class="navbar-brand" href="#nodes">Admin Console</a>
+
+  <div class="collapse navbar-collapse" id="navigation">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="#nodes">Nodes<span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#versions">Versions</a>
       </li>
     </ul>
   </div>
-</div>
-<h2>Version</h2>
-<div class="well">
-  <div>
-    <label>From: </label>
-    <input class="form-control" type="datetime-local" #since>
-    <label>To: </label>
-    <input class="form-control" type="datetime-local" #until>
-    <button type="button" class="btn" (click)="GetVersion($event, since.value, until.value)">Update</button>
-  </div>
-  <div *ngFor="let version of versions">
-    <div class="well">
-      <ul class="list-group">
-        <li class="list-group-item">Hash: {{version.sha}}</li>
-        <li class="list-group-item">Committer: {{version.commit.committer.name}}</li>
-        <li class="list-group-item">Commit Date: {{version.commit.committer.date}}</li>
-        <li class="list-group-item">Message: {{version.commit.message}}</li>
-      </ul>
+</nav>
+
+<div class="container" id="nodes">
+  <h1>Nodes</h1>
+  <div class="row">
+    <div class="col container box" *ngFor="let node of nodes">
+      <div>
+        <h4>{{node.id}} {{node.serviceDnsName}}:{{node.port}}</h4>
+      </div>
+      <div>
+        VM Name: {{node.vmName}}
+      </div>
+      <div>
+        Restaurants:
+        <div class="indent" *ngFor="let restaurant of node.Restaurants">
+          {{restaurant.Name}}
+        </div>
+      </div>
+      <div>
+        Last Request: {{node.lastRequest}}
+      </div>
+      <div>
+        Version: {{node.version}}
+      </div>
+      <div>
+        Actions:
+        <button type="button" class="btn btn-light btn-sm" (click)="Restart($event, node)">Restart</button>
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-light btn-sm" [disabled]="!node.version" data-toggle="modal" data-target="#changeVersionModal">
+          Change Version
+        </button>
+
+        <!-- Modal -->
+        <div class="modal fade" id="changeVersionModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Change Version (Current: {{node.version}})</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div>
+                  Branch:
+                  <select class="form-control" id="branch" #branch>
+                    <option *ngFor="let branch of branches" [selected]="branch.name=='master'">{{branch.name}}</option>
+                  </select>
+                </div>
+                <div>
+                  Since: <input class="form-control" type="datetime-local" id="since" #since>
+                </div>
+                <div>
+                  Until: <input class="form-control" type="datetime-local" id="until" #until>
+                </div>
+                <div>
+                  <button class="btn btn-light btn-sm" (click)="GetVersions($event, branch.value, since.value, until.value)">Search</button>
+                </div>
+                <div>
+                  Commits:
+                  <select class="form-control" id="commit" #commit>
+                    <option *ngFor="let version of versions" [value]="version.sha">{{version.sha.substring(0, 6)}} {{version.commit.message}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" (click)="ChangeVersion($event, node.id, commit.value)" data-dismiss="modal">Save changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

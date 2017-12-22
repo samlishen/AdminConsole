@@ -14,12 +14,22 @@
         {
             "id": 2,
             "serviceDnsName": "http://localhost",
-            "port": 3001,
+            "port": 3002,
             "vmName": "Sam Test VM 1",
             "Restaurants": [
                 {"Name": "Sam Test Restaurant 4"},
                 {"Name": "Sam Test Restaurant 5"},
                 {"Name": "Sam Test Restaurant 6"}
+            ]
+        },
+        {
+            "id": 3,
+            "serviceDnsName": "http://localhost",
+            "port": 3003,
+            "vmName": "Sam Test VM 1",
+            "Restaurants": [
+                {"Name": "Sam Test Restaurant 7"},
+                {"Name": "Sam Test Restaurant 8"}
             ]
         }
     ]
